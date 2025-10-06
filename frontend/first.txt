@@ -1,0 +1,521 @@
+// initila index.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlowScan: Skincare Product Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="app-title">✨ GlowScan</h1>
+        <p class="tagline">Your personal guide to healthier skin and hair.</p>
+
+        <div class="card upload-card">
+            <label for="imageUpload" class="custom-file-upload">
+                <span class="icon">📸</span> Upload Product Label Image
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" hidden>
+            <p id="fileNameDisplay" class="file-name-display"></p>
+        </div>
+
+        <div class="card select-card">
+            <label for="productType" class="input-label">Select Product Type:</label>
+            <select id="productType" class="styled-select">
+                <option value="Moisturizer">Moisturizer</option>
+                <option value="Shampoo">Shampoo</option>
+                <option value="Sunscreen">Sunscreen</option>
+                <option value="Face Wash">Face Wash</option>
+            </select>
+        </div>
+
+        <div class="card extracted-card">
+            <label for="extractedIngredients" class="input-label">Extracted Ingredients:</label>
+            <textarea id="extractedIngredients" class="styled-textarea" rows="10" placeholder="Upload an image to extract ingredients..." readonly></textarea>
+        </div>
+
+        <button id="analyzeButton" class="styled-button analyze-button">Analyze Ingredients</button>
+
+        <div id="loadingSpinner" class="spinner" style="display: none;"></div>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div class="card analysis-result-card">
+            <h2 class="analysis-title">🔍 Ingredient Analysis</h2>
+            <div id="analysisResult" class="analysis-content">
+                <p>Analysis will appear here.</p>
+            </div>
+        </div>
+
+        <div class="download-section" style="display: none;">
+            <p class="download-label">Download Analysis:</p>
+            <div class="download-buttons">
+                <button id="downloadPdf" class="download-button pdf-button" title="Download as PDF">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button id="downloadPng" class="download-button png-button" title="Download as PNG">
+                    <i class="fas fa-image"></i> PNG
+                </button>
+            </div>
+        </div>
+        </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
+// style.css
+/* --- Root Variables for Easy Theme Customization --- */
+:root {
+    --bg-color: #fdf8f5; /* Soft off-white / light blush */
+    --card-bg-color: #ffffff;
+    --primary-color: #e57373; /* Muted coral/pink */
+    --primary-hover-color: #d36a6a;
+    --text-color: #5d5d5d;
+    --heading-color: #333333;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(99, 99, 99, 0.1);
+    --font-family: 'Poppins', sans-serif;
+}
+
+/* --- General Body & Layout Styling --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* --- Header --- */
+.app-header {
+    text-align: center;
+}
+
+.app-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin-bottom: 0.25rem;
+}
+
+.tagline {
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--text-color);
+}
+
+/* --- Card Styling --- */
+.card {
+    background-color: var(--card-bg-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    width: 100%;
+}
+
+/* --- Form Elements & Buttons --- */
+.input-label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 400;
+    color: var(--heading-color);
+}
+
+.custom-file-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+    font-weight: 400;
+}
+
+.custom-file-upload i {
+    margin-right: 0.75rem;
+    color: var(--primary-color);
+}
+
+.custom-file-upload:hover {
+    background-color: #fefcfb;
+    border-color: var(--primary-color);
+}
+
+.file-name-display {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    font-weight: 400;
+}
+
+.styled-select, .styled-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: #f9f9f9;
+    font-family: var(--font-family);
+    font-size: 1rem;
+    color: var(--text-color);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.styled-select:focus, .styled-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(229, 115, 115, 0.2);
+}
+
+.styled-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.analyze-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.analyze-button i {
+    margin-right: 0.75rem;
+}
+
+.analyze-button:hover {
+    background-color: var(--primary-hover-color);
+    transform: translateY(-2px);
+}
+
+/* --- Results, Loading & Error States --- */
+.results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.analysis-title {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    color: var(--heading-color);
+}
+
+.spinner-container {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-message {
+    text-align: center;
+    color: #d32f2f;
+    padding: 1rem;
+    background-color: rgba(211, 47, 47, 0.1);
+    border-radius: 8px;
+}
+
+.analysis-content p {
+    line-height: 1.6;
+}
+
+/* --- Download Section --- */
+.download-section {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.download-label {
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+.download-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.download-button {
+    padding: 0.6rem 1.2rem;
+    background-color: #f1f1f1;
+    color: var(--heading-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.download-button:hover {
+    background-color: var(--heading-color);
+    color: white;
+}
+
+.download-button i {
+    margin-right: 0.5rem;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 640px) {
+    body {
+        padding: 1rem 0.5rem;
+    }
+    .container {
+        gap: 1rem;
+    }
+    .card {
+        padding: 1.25rem;
+    }
+    .app-title {
+        font-size: 2rem;
+    }
+}
+
+
+//script.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    const imageUpload = document.getElementById('imageUpload');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const productTypeSelect = document.getElementById('productType');
+    const extractedIngredientsTextarea = document.getElementById('extractedIngredients');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const analysisResultDiv = document.getElementById('analysisResult');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorMessageDiv = document.getElementById('errorMessage');
+    const downloadSection = document.querySelector('.download-section'); // New
+    const downloadPdfButton = document.getElementById('downloadPdf'); // New
+    const downloadPngButton = document.getElementById('downloadPng'); // New
+
+    let uploadedImageFile = null;
+
+    // In your local script.js file
+    const API_BASE_URL = "http://localhost:8000"; // <-- MAKE SURE THIS IS EXACTLY THIS
+    
+
+    // Function to show/hide loading spinner and manage button state
+    function toggleLoading(show) {
+        if (show) {
+            loadingSpinner.style.display = 'block';
+            errorMessageDiv.style.display = 'none';
+            analysisResultDiv.innerHTML = '<p>Analysis in progress...</p>';
+            analyzeButton.disabled = true;
+            analyzeButton.classList.add('loading');
+            downloadSection.style.display = 'none'; // Hide download buttons when analyzing
+        } else {
+            loadingSpinner.style.display = 'none';
+            analyzeButton.disabled = false;
+            analyzeButton.classList.remove('loading');
+        }
+    }
+
+    // Function to display error messages
+    function displayError(message) {
+        errorMessageDiv.textContent = `Error: ${message}`;
+        errorMessageDiv.style.display = 'block';
+        analysisResultDiv.innerHTML = '<p>Analysis failed. Please try again.</p>';
+        downloadSection.style.display = 'none'; // Hide download buttons on error
+    }
+
+    // Handle image upload and OCR extraction
+    imageUpload.addEventListener('change', async (event) => {
+        uploadedImageFile = event.target.files[0];
+        if (!uploadedImageFile) {
+            fileNameDisplay.textContent = "";
+            extractedIngredientsTextarea.value = "";
+            return;
+        }
+
+        fileNameDisplay.textContent = `Selected: ${uploadedImageFile.name}`;
+        extractedIngredientsTextarea.value = "Extracting text...";
+        toggleLoading(true);
+
+        const formData = new FormData();
+        formData.append('image', uploadedImageFile);
+        formData.append('product_type', productTypeSelect.value);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/extract`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.warning) {
+                extractedIngredientsTextarea.value = data.warning;
+                displayError(data.warning);
+            } else {
+                extractedIngredientsTextarea.value = data.ingredients || "No text extracted.";
+            }
+        } catch (error) {
+            console.error("Error during OCR extraction:", error);
+            displayError(`Failed to extract ingredients: ${error.message}`);
+            extractedIngredientsTextarea.value = "Failed to extract ingredients.";
+        } finally {
+            toggleLoading(false);
+        }
+    });
+
+    // Handle ingredient analysis
+    analyzeButton.addEventListener('click', async () => {
+        const ingredientsText = extractedIngredientsTextarea.value.trim();
+        const productType = productTypeSelect.value;
+
+        if (!ingredientsText || ingredientsText === "No text extracted." || ingredientsText === "Extracting text..." || ingredientsText.startsWith("Failed to extract ingredients")) {
+            displayError("Please upload an image and ensure ingredients are extracted before analyzing.");
+            return;
+        }
+
+        toggleLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ingredients: ingredientsText,
+                    product_type: productType
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.result || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            analysisResultDiv.innerHTML = data.result;
+            downloadSection.style.display = 'block'; // Show download buttons after successful analysis
+        } catch (error) {
+            console.error("Error during analysis:", error);
+            displayError(`Failed to analyze ingredients: ${error.message}`);
+            downloadSection.style.display = 'none'; // Ensure buttons are hidden on analysis failure
+        } finally {
+            toggleLoading(false);
+        }
+    });
+
+    // --- Download Functionality ---
+
+    // Download as PDF
+    downloadPdfButton.addEventListener('click', async () => {
+        const { jsPDF } = window.jspdf; // Get jsPDF from window object
+        const content = document.getElementById('analysisResult');
+
+        // Show a temporary message to the user
+        alert('Generating PDF... This may take a moment.');
+
+        try {
+            const canvas = await html2canvas(content, {
+                scale: 2, // Increase scale for better quality in PDF
+                useCORS: true, // If analysisResult contains images from other domains
+                logging: false // Disable logging for cleaner console
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' for portrait, 'mm' for units, 'a4' for size
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save('GlowScan_Analysis.pdf');
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Failed to generate PDF. Please try again or check console for details.');
+        }
+    });
+
+    // Download as PNG
+    downloadPngButton.addEventListener('click', async () => {
+        const content = document.getElementById('analysisResult');
+
+        // Show a temporary message to the user
+        alert('Generating PNG image... This may take a moment.');
+
+        try {
+            const canvas = await html2canvas(content, {
+                scale: 2, // Increase scale for better quality
+                useCORS: true,
+                logging: false
+            });
+
+            const link = document.createElement('a');
+            link.download = 'GlowScan_Analysis.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (error) {
+            console.error('Error generating PNG:', error);
+            alert('Failed to generate PNG. Please try again or check console for details.');
+        }
+    });
+});
